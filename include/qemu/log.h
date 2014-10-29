@@ -13,6 +13,8 @@
 /* Private global variables, don't use */
 extern FILE *qemu_logfile;
 extern int qemu_loglevel;
+extern FILE *qemu_logfile_bin;
+extern int qemu_loglevel_bin;
 
 /*
  * The new API:
@@ -26,6 +28,11 @@ extern int qemu_loglevel;
 static inline bool qemu_log_enabled(void)
 {
     return qemu_logfile != NULL;
+}
+
+static inline bool qemu_log_enabled_bin(void)
+{
+    return qemu_logfile_bin != NULL;
 }
 
 #define CPU_LOG_TB_OUT_ASM (1 << 0)
@@ -48,6 +55,11 @@ static inline bool qemu_loglevel_mask(int mask)
     return (qemu_loglevel & mask) != 0;
 }
 
+static inline bool qemu_loglevel_mask_bin(int mask)
+{
+    return (qemu_loglevel_bin & mask) != 0;
+}
+
 /* Logging functions: */
 
 /* main logging function
@@ -61,6 +73,14 @@ qemu_log_vprintf(const char *fmt, va_list va)
 {
     if (qemu_logfile) {
         vfprintf(qemu_logfile, fmt, va);
+    }
+}
+
+static inline void GCC_FMT_ATTR(1, 0)
+qemu_log_vprintf_bin(const char *fmt, va_list va)
+{
+    if (qemu_logfile_bin) {
+        vfprintf(qemu_logfile_bin, fmt, va);
     }
 }
 
@@ -87,6 +107,12 @@ static inline void log_cpu_state(CPUState *cpu, int flags)
         cpu_dump_state(cpu, qemu_logfile, fprintf, flags);
     }
 }
+static inline void log_cpu_state_bin(CPUState *cpu, int flags)
+{
+    if (qemu_log_enabled_bin()) {
+        cpu_dump_state_bin(cpu, qemu_logfile_bin, fwrite, flags);
+    }
+}
 /**
  * log_cpu_state_mask:
  * @mask: Mask when to log.
@@ -99,6 +125,13 @@ static inline void log_cpu_state_mask(int mask, CPUState *cpu, int flags)
 {
     if (qemu_loglevel & mask) {
         log_cpu_state(cpu, flags);
+    }
+}
+
+static inline void log_cpu_state_mask_bin(int mask, CPUState *cpu, int flags)
+{
+    if (qemu_loglevel_bin & mask) {
+        log_cpu_state_bin(cpu, flags);
     }
 }
 
@@ -115,6 +148,18 @@ void disas(FILE*, void*, unsigned long);
 static inline void log_disas(void *code, unsigned long size)
 {
     disas(qemu_logfile, code, size);
+}
+
+static inline void log_target_disas_bin(CPUArchState *env, target_ulong start,
+                                    target_ulong len, int flags)
+{
+    target_disas(qemu_logfile_bin, env, start, len, flags);
+}
+
+
+static inline void log_disas_bin(void *code, unsigned long size)
+{
+    disas(qemu_logfile_bin, code, size);
 }
 
 #if defined(CONFIG_USER_ONLY)
@@ -134,6 +179,10 @@ static inline void qemu_log_flush(void)
 {
     fflush(qemu_logfile);
 }
+static inline void qemu_log_flush_bin(void)
+{
+    fflush(qemu_logfile_bin);
+}
 
 /* Close the log file */
 static inline void qemu_log_close(void)
@@ -146,10 +195,25 @@ static inline void qemu_log_close(void)
     }
 }
 
+static inline void qemu_log_close_bin(void)
+{
+    if (qemu_logfile_bin) {
+        if (qemu_logfile_bin != stderr) {
+            fclose(qemu_logfile_bin);
+        }
+        qemu_logfile_bin = NULL;
+    }
+}
+
 /* Set up a new log file */
 static inline void qemu_log_set_file(FILE *f)
 {
     qemu_logfile = f;
+}
+
+static inline void qemu_log_set_file_bin(FILE *f)
+{
+    qemu_logfile_bin = f;
 }
 
 /* define log items */
@@ -165,6 +229,7 @@ extern const QEMULogItem qemu_log_items[];
  * changing the log level; it should only be accessed via
  * the qemu_set_log() wrapper.
  */
+ void do_qemu_set_log_text(int log_flags);
 void do_qemu_set_log(int log_flags, bool use_own_buffers);
 
 static inline void qemu_set_log(int log_flags)
@@ -174,6 +239,12 @@ static inline void qemu_set_log(int log_flags)
 #else
     do_qemu_set_log(log_flags, false);
 #endif
+}
+void do_qemu_set_log_bin(int log_flags);
+
+static inline void qemu_set_log_bin(int log_flags)
+{
+    do_qemu_set_log_bin(log_flags);
 }
 
 void qemu_set_log_filename(const char *filename);

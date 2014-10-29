@@ -10006,6 +10006,23 @@ static const char *cpu_mode_names[16] = {
   "???", "???", "???", "und", "???", "???", "???", "sys"
 };
 
+void cpu_dump_state_bin(CPUState *cpu, FILE *f, fprintf_function cpu_fprintf,
+                    int flags)
+{
+    CPUARMState *env = cpu->env_ptr;
+    int i;
+
+	uint32_t psr;
+	for ( i = 0; i < 16; i = i + 4 ) {
+    	cpu_fprintf(&(env->regs[i]), 4, 1, f);
+    	cpu_fprintf(&(env->regs[i + 1]), 4, 1, f);
+    	cpu_fprintf(&(env->regs[i + 2]), 4, 1, f);
+    	cpu_fprintf(&(env->regs[i + 3]), 4, 1, f);
+	}
+	psr = cpsr_read(env);
+	cpu_fprintf(&psr, 4, 1, f);
+}
+
 void cpu_dump_state(CPUState *cpu, FILE *f, fprintf_function cpu_fprintf,
                     int flags)
 {

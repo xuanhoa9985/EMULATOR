@@ -132,6 +132,17 @@ void cpu_dump_state(CPUState *cpu, FILE *f, fprintf_function cpu_fprintf,
                     int flags);
 
 /**
+ * cpu_dump_state_bin:
+ * @cpu: The CPU whose state is to be dumped.
+ * @f: File to dump to.
+ * @cpu_fprintf: Function to dump with.
+ * @flags: Flags what to dump.
+ *
+ * Dumps CPU state.
+ */
+void cpu_dump_state_bin(CPUState *env, FILE *f, fprintf_function cpu_fprintf,
+                    int flags);
+/**
  * cpu_dump_statistics:
  * @cpu: The CPU whose state is to be dumped.
  * @f: File to dump to.

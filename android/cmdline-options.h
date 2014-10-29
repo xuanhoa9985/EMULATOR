@@ -62,6 +62,7 @@
  *
  */
 
+CFG_PARAM( debuglowlevel,  "<options>",  "out_asm, in_asm, op, op_opt, int, exec, cpu IN <options>" )
 CFG_PARAM( sysdir,  "<dir>",  "search for system disk images in <dir>" )
 CFG_PARAM( system,  "<file>", "read initial system image from <file>" )
 CFG_PARAM( datadir, "<dir>",  "write user data into <dir>" )

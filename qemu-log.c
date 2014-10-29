@@ -25,6 +25,12 @@ FILE *qemu_logfile;
 int qemu_loglevel;
 static int log_append = 0;
 
+static char *logfilename_text = "/media/OTHER_DATA/qemu.log";
+static char *logfilename_bin = "/media/OTHER_DATA/qemu.log.bin";
+FILE *qemu_logfile_bin;
+int qemu_loglevel_bin;
+static int log_append_bin = 0;
+
 void qemu_log(const char *fmt, ...)
 {
     va_list ap;
@@ -36,6 +42,17 @@ void qemu_log(const char *fmt, ...)
     va_end(ap);
 }
 
+void qemu_log_bin(const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    if (qemu_logfile_bin) {
+        vfprintf(qemu_logfile_bin, fmt, ap);
+    }
+    va_end(ap);
+}
+
 void qemu_log_mask(int mask, const char *fmt, ...)
 {
     va_list ap;
@@ -43,6 +60,17 @@ void qemu_log_mask(int mask, const char *fmt, ...)
     va_start(ap, fmt);
     if ((qemu_loglevel & mask) && qemu_logfile) {
         vfprintf(qemu_logfile, fmt, ap);
+    }
+    va_end(ap);
+}
+
+void qemu_log_mask_bin(int mask, const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    if ((qemu_loglevel_bin & mask) && qemu_logfile_bin) {
+        vfprintf(qemu_logfile_bin, fmt, ap);
     }
     va_end(ap);
 }
@@ -82,12 +110,62 @@ void do_qemu_set_log(int log_flags, bool use_own_buffers)
     }
 }
 
+void do_qemu_set_log_text(int log_flags)
+{
+    qemu_loglevel = log_flags;
+    if (qemu_loglevel && !qemu_logfile) {
+            qemu_logfile = fopen(logfilename_text, "w");
+            if (!qemu_logfile) {
+                perror(logfilename_text);
+                _exit(1);
+            }
+        /* must avoid mmap() usage of glibc by setting a buffer "by hand" */
+
+            static char logfile_buf[4096];
+
+            setvbuf(qemu_logfile, logfile_buf, _IOLBF, sizeof(logfile_buf));
+
+    }
+    if (!qemu_loglevel && qemu_logfile) {
+        qemu_log_close();
+    }
+}
+
+
+void do_qemu_set_log_bin(int log_flags)
+{
+    qemu_loglevel_bin = log_flags;
+    if (qemu_loglevel_bin && !qemu_logfile_bin) {
+            qemu_logfile_bin = fopen(logfilename_bin, "w");
+            if (!qemu_logfile_bin) {
+                perror(logfilename_bin);
+                _exit(1);
+            }
+        /* must avoid mmap() usage of glibc by setting a buffer "by hand" */
+
+            static char logfile_buf[4096];
+
+            setvbuf(qemu_logfile_bin, logfile_buf, _IOLBF, sizeof(logfile_buf));
+    }
+    if (!qemu_loglevel_bin && qemu_logfile_bin) {
+        qemu_log_close();
+    }
+}
+
 void qemu_set_log_filename(const char *filename)
 {
     g_free(logfilename);
     logfilename = g_strdup(filename);
     qemu_log_close();
     qemu_set_log(qemu_loglevel);
+}
+
+void qemu_set_log_filename_bin(const char *filename)
+{
+    g_free(logfilename_bin);
+    logfilename = g_strdup(filename);
+    qemu_log_close();
+    qemu_set_log_bin(qemu_loglevel_bin);
 }
 
 const QEMULogItem qemu_log_items[] = {

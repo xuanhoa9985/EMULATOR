@@ -1788,4 +1788,7 @@ DEF("snapshot-no-time-update", 0, QEMU_OPTION_snapshot_no_time_update, \
 DEF("list-webcam", 0, QEMU_OPTION_list_webcam, \
     "-list-webcam List web cameras available for emulation\n")
 
+DEF("debuglowlevel", HAS_ARG, QEMU_OPTION_debuglowlevel, \
+    "-debuglowlevel Debug TCG\n")
+
 #endif /* ANDROID */

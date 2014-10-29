@@ -8569,6 +8569,12 @@ cpu_mips_check_sign_extensions (CPUMIPSState *env, FILE *f,
 }
 #endif
 
+void cpu_dump_state_bin(CPUState *env, FILE *f, fprintf_function cpu_fprintf,
+                     int flags)
+{
+
+}
+
 void cpu_dump_state (CPUState *cpu, FILE *f,
                      int (*cpu_fprintf)(FILE *f, const char *fmt, ...),
                      int flags)

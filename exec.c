@@ -85,13 +85,17 @@ int io_mem_watch;
 
 /* log support */
 #ifdef WIN32
-static const char *logfilename = "qemu.log";
+static const char *logfilename_bin = "qemu.log.bin";
 #else
-static const char *logfilename = "/tmp/qemu.log";
+static const char *logfilename = "/media/OTHER_DATA/qemu.log";
+static const char *logfilename_bin = "/media/OTHER_DATA/qemu.log.bin";
 #endif
 FILE *logfile;
 int loglevel;
 static int log_append = 0;
+FILE *logfile_bin;
+int loglevel_bin;
+static int log_append_bin = 0;
 
 #define SUBPAGE_IDX(addr) ((addr) & ~TARGET_PAGE_MASK)
 typedef struct subpage_t {
@@ -400,6 +404,33 @@ void cpu_single_step(CPUState *cpu, int enabled)
 }
 
 /* enable or disable low levels log */
+void cpu_set_log_bin(int log_flags)
+{
+    loglevel_bin = log_flags;
+    if (loglevel_bin && !logfile_bin) {
+    	logfile_bin = fopen(logfilename_bin, log_append_bin ? "a" : "w");
+        if (!logfile_bin) {
+            perror(logfilename_bin);
+            exit(1);
+        }
+#if !defined(CONFIG_SOFTMMU)
+        /* must avoid mmap() usage of glibc by setting a buffer "by hand" */
+        {
+            static char logfile_buf[4096];
+            setvbuf(logfile_bin, logfile_buf, _IOLBF, sizeof(logfile_buf));
+        }
+#elif !defined(_WIN32)
+        /* Win32 doesn't support line-buffering and requires size >= 2 */
+        setvbuf(logfile_bin, NULL, _IOLBF, 0);
+#endif
+        log_append_bin = 1;
+    }
+    if (!loglevel_bin && logfile_bin) {
+        fclose(logfile_bin);
+        logfile_bin = NULL;
+    }
+}
+
 void cpu_set_log(int log_flags)
 {
     loglevel = log_flags;
@@ -425,6 +456,16 @@ void cpu_set_log(int log_flags)
         fclose(logfile);
         logfile = NULL;
     }
+}
+
+void cpu_set_log_filename_bin(const char *filename)
+{
+    logfilename_bin = strdup(filename);
+    if (logfile_bin) {
+        fclose(logfile_bin);
+        logfile_bin = NULL;
+    }
+    cpu_set_log(loglevel_bin);
 }
 
 void cpu_set_log_filename(const char *filename)

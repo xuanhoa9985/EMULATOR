@@ -58,6 +58,8 @@
 #include "android/framebuffer.h"
 #include "android/iolooper.h"
 
+#include "android/log_low_level.h"
+
 SkinRotation  android_framebuffer_rotation;
 
 #define  STRINGIFY(x)   _STRINGIFY(x)
@@ -1166,6 +1168,25 @@ int main(int argc, char **argv)
             derror("Valid values are: on, off or auto\n");
             exit(1);
         }
+    }
+    
+    if (opts->debuglowlevel) {
+        int mask;
+        const CPULogItem_android *item;
+
+        const char* debuglowlevel = opts->debuglowlevel;
+
+        mask = cpu_str_to_log_mask_android(debuglowlevel);
+        if (!mask) {
+            printf("Log items (comma separated):\n");
+            for(item = cpu_log_items_android; item->mask != 0; item++) {
+                printf("%-10s %s\n", item->name, item->help);
+            }
+            derror("Invalid parameter -d=%s", debuglowlevel);
+        }
+        //do_qemu_set_log_text(mask);
+        do_qemu_set_log_bin(mask);
+        derror("debuglowlevel XUANHOA ON %s, mask = 0x%08x\n", opts->debuglowlevel, mask);
     }
 
     /* Quit emulator on condition that both, gpu and snapstorage are on. This is

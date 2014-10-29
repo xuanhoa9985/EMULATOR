@@ -556,7 +556,8 @@ int cpu_exec(CPUOldState *env)
                               | env->cc_dest | (env->cc_x << 4);
                     log_cpu_state(cpu, 0);
 #else
-                    log_cpu_state(cpu, 0);
+//                    log_cpu_state(cpu, 0); //enable this to dump to text file
+                    log_cpu_state_bin(cpu, 0); // enable this to dump to binary file
 #endif
                 }
 #endif /* DEBUG_DISAS || CONFIG_DEBUG_EXEC */
